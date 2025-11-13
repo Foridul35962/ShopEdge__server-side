@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser'
 const app = express()
 
 //local module import
-
+import userRouter from './routers/user.route.js'
 
 //setting request URL
 app.use(cors({
@@ -23,8 +23,13 @@ app.use(express.static('public'))
 app.use(urlencoded({extended: false}))
 app.use(express.json())
 
-//routers
+//is server working check
+app.use('/', (req, res)=>{
+    res.send('Shop Edge server is running ...')
+})
 
+//routers
+app.use('/api/v1/users', userRouter)
 ////Global error handler
 
 export default app
