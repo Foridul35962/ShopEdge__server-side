@@ -6,6 +6,7 @@ const app = express()
 
 //local module import
 import userRouter from './routers/user.route.js'
+import errorHandler from './utils/errorHandler.js'
 
 //setting request URL
 app.use(cors({
@@ -30,6 +31,8 @@ app.use('/', (req, res)=>{
 
 //routers
 app.use('/api/v1/users', userRouter)
-////Global error handler
+
+//Global error handler
+app.use(errorHandler)
 
 export default app
