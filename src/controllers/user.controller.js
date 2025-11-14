@@ -65,3 +65,54 @@ export const register = [
 
     })
 ]
+
+export const verifyEmail = asyncHandler(async (req, res) => {
+    const { otp, email } = req.body
+    if (!email) {
+        throw new ApiErrors(400, 'Email is required')
+    }
+
+    const temp = await TempUsers.findOne({ email })
+    if (!temp) {
+        throw new ApiErrors(404, 'Email is not found in out temp database')
+    }
+
+    if (otp === '' || temp.otp !== otp) {
+        throw new ApiErrors(400, 'Otp is not matched')
+    }
+
+    if (temp.expiredOtp.getTime() < Date.now()) {
+        throw new ApiErrors(400, 'Otp is expired')
+    }
+
+    const user = await Users.create({
+        name: temp.name,
+        email: temp.email,
+        password: temp.password,
+        role: 'customer'
+    })
+    user.password = undefined
+
+    await TempUsers.findOneAndDelete({email})
+
+    //create JWT token
+    const payload = {user:{id:user._id, role: user.role}}
+    
+    //sign and return the token along with user data
+    jwt.sign(
+        payload,
+        process.env.JWT_SECRET,
+        {expiresIn: '40h'},
+        (err, token)=>{
+            if (err) {
+                throw new ApiErrors(500, 'JWT create failed')
+            }
+
+            return res
+                .status(200)
+                .json(
+                    new ApiResponse(200, {user, token}, 'user registration successfully')
+                )
+        }
+    )
+})
