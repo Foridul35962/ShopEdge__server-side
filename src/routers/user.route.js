@@ -5,5 +5,6 @@ const user = express.Router()
 
 user.post('/register', userController.register)
 user.post('/register-verify-email', userController.verifyEmail)
+user.post('/login', userController.login)
 
 export default user

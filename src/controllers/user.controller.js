@@ -116,3 +116,44 @@ export const verifyEmail = asyncHandler(async (req, res) => {
         }
     )
 })
+
+//login
+export const login = asyncHandler(async(req, res)=>{
+    const {email, password} = req.body
+    if (!email || !password) {
+        throw new ApiErrors(400, "email and password is required")
+    }
+
+    const user = await Users.findOne({email})
+    if (!user) {
+        throw new ApiErrors(404, 'email is not found')
+    }
+
+    const isPassMatched = await user.isPasswordCorrect(password)
+    if (!isPassMatched) {
+        throw new ApiErrors(400, 'password is not matched')
+    }
+
+    user.password = undefined
+
+    //create JWT token
+    const payload = {user:{id:user._id, role: user.role}}
+    
+    //sign and return the token along with user data
+    jwt.sign(
+        payload,
+        process.env.JWT_SECRET,
+        {expiresIn: '40h'},
+        (err, token)=>{
+            if (err) {
+                throw new ApiErrors(500, 'JWT create failed')
+            }
+
+            return res
+                .status(200)
+                .json(
+                    new ApiResponse(200, {user, token}, 'user loggedIn successfully')
+                )
+        }
+    )
+})
