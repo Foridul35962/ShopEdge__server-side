@@ -1,5 +1,67 @@
 import jwt from 'jsonwebtoken'
+import { check, validationResult } from 'express-validator'
+import asyncHandler from '../utils/asyncHandler.js'
+import ApiErrors from '../utils/ApiErrors.js'
+import Users from '../models/Users.model.js'
+import { generateVerificationMail } from '../nodeMailer/verificationMail.js'
+import { TempUsers } from '../models/TempUsers.model.js'
+import transport from '../nodeMailer/config.js'
+import ApiResponse from '../utils/ApiResponse.js'
 
-export const register = (req, res)=>{
 
-}
+export const register = [
+    check('name')
+        .trim(),
+    check('email')
+        .isEmail()
+        .withMessage('Please Enter a valid Email'),
+    check('password')
+        .trim()
+        .isLength({ min: 6 })
+        .withMessage('password must be minimum 6 charecter')
+        .matches(/[0-9]/)
+        .withMessage('password must be has one digit')
+        .matches(/[a-zA-Z]/)
+        .withMessage('password must be has one alphabet'),
+
+    asyncHandler(async (req, res) => {
+        const error = validationResult(req)
+        if (!error.isEmpty()) {
+            throw new ApiErrors(400, 'Insert wrong value', error.array())
+        }
+
+        const { name, email, password } = req.body
+        if (!name || !email || !password) {
+            throw new ApiErrors(400, 'All field are required')
+        }
+
+        const dublicateUser = await Users.findOne({ email })
+        if (dublicateUser) {
+            throw new ApiErrors(400, 'This email is already used')
+        }
+
+        const otp = String(Math.floor(100000 + Math.random() * 900000))
+        const expiredOtp = Date.now() + 1000 * 60 * 5
+        const mailOption = generateVerificationMail(email, otp)
+
+        //save user in temporary
+        await TempUsers.findOneAndUpdate(
+            { email },
+            { name, email, password, otp, expiredOtp, createdAt: Date.now() },
+            { upsert: true, new: true }
+        )
+
+        try {
+            await transport.sendMail(mailOption)
+        } catch (error) {
+            throw new ApiErrors(500, 'Otp send failed')
+        }
+
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, {}, 'Otp send successfully')
+            )
+
+    })
+]
