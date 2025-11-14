@@ -24,13 +24,13 @@ app.use(express.static('public'))
 app.use(urlencoded({extended: false}))
 app.use(express.json())
 
-//is server working check
-app.use('/', (req, res)=>{
-    res.send('Shop Edge server is running ...')
-})
-
 //routers
 app.use('/api/v1/users', userRouter)
+
+//is server working check
+app.get('/', (req, res)=>{
+    res.send('Shop Edge server is running ...')
+})
 
 //Global error handler
 app.use(errorHandler)
