@@ -90,21 +90,6 @@ export const updateProduct = asyncHandler(async (req, res) => {
         isPublished,
     } = req.body
 
-    if (
-        !name ||
-        !description ||
-        !price ||
-        !countInStock ||
-        !sku ||
-        !category ||
-        !Array.isArray(sizes) || sizes.length === 0 ||
-        !Array.isArray(colors) || colors.length === 0 ||
-        !collections ||
-        !Array.isArray(images) || images.length === 0
-    ) {
-        throw new ApiErrors(400, "All field are required")
-    }
-
     const { _id: productId } = req.params
     const product = await Products.findById(productId)
     if (!product) {
@@ -139,4 +124,18 @@ export const updateProduct = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(200, updatedProduct, "product updated successfully")
         )
+})
+
+export const deleteProduct = asyncHandler(async (req, res) => {
+    const {productId} = req.body
+    try {
+        await Products.findByIdAndDelete(productId)
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, {}, 'Product delete successfully')
+            )
+    } catch (error) {
+        throw new ApiErrors(400, 'Entered wrong product id')
+    }
 })
