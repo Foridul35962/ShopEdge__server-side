@@ -96,7 +96,7 @@ export const verifyEmail = asyncHandler(async (req, res) => {
     await TempUsers.findOneAndDelete({email})
 
     //create JWT token
-    const payload = {user:{id:user._id, role: user.role}}
+    const payload = {user:{_id:user._id, role: user.role}}
     
     //sign and return the token along with user data
     jwt.sign(
@@ -137,7 +137,7 @@ export const login = asyncHandler(async(req, res)=>{
     user.password = undefined
 
     //create JWT token
-    const payload = {user:{id:user._id, role: user.role}}
+    const payload = {user:{_id:user._id, role: user.role}}
     
     //sign and return the token along with user data
     jwt.sign(
@@ -156,4 +156,14 @@ export const login = asyncHandler(async(req, res)=>{
                 )
         }
     )
+})
+
+//get user profile
+export const profile = asyncHandler(async (req, res)=>{
+    const user = req.user
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, user, 'profile fecthed successfully')
+        )
 })
