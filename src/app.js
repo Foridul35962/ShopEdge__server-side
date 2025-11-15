@@ -7,6 +7,7 @@ const app = express()
 //local module import
 import userRouter from './routers/user.route.js'
 import errorHandler from './utils/errorHandler.js'
+import productRouter from './routers/product.route.js'
 
 //setting request URL
 app.use(cors({
@@ -26,6 +27,7 @@ app.use(express.json())
 
 //routers
 app.use('/api/v1/users', userRouter)
+app.use('/api/v1/products', productRouter)
 
 //is server working check
 app.get('/', (req, res)=>{
