@@ -8,6 +8,7 @@ const app = express()
 import userRouter from './routers/user.route.js'
 import errorHandler from './utils/errorHandler.js'
 import productRouter from './routers/product.route.js'
+import CartRouter from './routers/Cart.route.js'
 
 //setting request URL
 app.use(cors({
@@ -28,6 +29,7 @@ app.use(express.json())
 //routers
 app.use('/api/v1/users', userRouter)
 app.use('/api/v1/products', productRouter)
+app.use('/api/v1/carts', CartRouter)
 
 //is server working check
 app.get('/', (req, res)=>{
