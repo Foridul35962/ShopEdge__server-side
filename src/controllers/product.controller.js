@@ -248,14 +248,14 @@ export const getProductById = asyncHandler(async (req, res) => {
 })
 
 export const similarProduct = asyncHandler(async (req, res) => {
-    const {_id: productId} = req.params
+    const { _id: productId } = req.params
     const product = await Products.findById(productId)
     if (!product) {
         throw new ApiErrors(404, "product is not found")
     }
 
     const similarProduct = await Products.find({
-        _id:{$ne: productId},   //exclude the currect product
+        _id: { $ne: productId },   //exclude the currect product
         gender: product.gender,
         category: product.category
     }).limit(4)
@@ -267,5 +267,30 @@ export const similarProduct = asyncHandler(async (req, res) => {
         .status(200)
         .json(
             new ApiResponse(200, similarProduct, 'similar product fetched successfully')
+        )
+})
+
+export const bestSellerProduct = asyncHandler(async (req, res) => {
+    const product = await Products.findOne().sort({ rating: -1 })
+    if (!product) {
+        throw new ApiErrors(404, 'best seller product not found')
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, product, 'best seller product fetched successfully')
+        )
+})
+
+export const newArrivals = asyncHandler(async(req, res)=>{
+    const product = await Products.find().sort({createdAt:-1}).limit(8)
+    if (!product) {
+        throw new ApiErrors(404, 'new arrivals products not found')
+    }
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, product, 'new arrivals product fetched successfully')
         )
 })

@@ -11,6 +11,8 @@ product.post('/delete-product', verifyJWT, checkAdmin, productController.deleteP
 product.get('/all', productController.getProduct)
 product.get('/id/:_id', productController.getProductById)
 product.get('/similar-product/:_id', productController.similarProduct)
+product.get('/best-seller', productController.bestSellerProduct)
+product.get('/new-arrivals', productController.newArrivals)
 
 
 export default product
