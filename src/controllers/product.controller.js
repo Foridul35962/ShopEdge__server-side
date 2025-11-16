@@ -127,7 +127,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
 })
 
 export const deleteProduct = asyncHandler(async (req, res) => {
-    const {productId} = req.body
+    const { productId } = req.body
     try {
         await Products.findByIdAndDelete(productId)
         return res
@@ -138,4 +138,134 @@ export const deleteProduct = asyncHandler(async (req, res) => {
     } catch (error) {
         throw new ApiErrors(400, 'Entered wrong product id')
     }
+})
+
+export const getProduct = asyncHandler(async (req, res) => {
+    const {
+        collections,
+        sizes,
+        colors,
+        gender,
+        minPrice,
+        maxPrice,
+        sortBy,
+        search,
+        category,
+        material,
+        brand,
+        limit
+    } = req.query
+    let query = {}
+
+    if (collections && collections.toLocaleLowerCase() !== 'all') {
+        query.collections = collections
+    }
+    if (category && category.toLocaleLowerCase() !== 'all') {
+        query.category = category
+    }
+    if (material) {
+        query.material = { $in: material.split(",") }
+    }
+    if (brand) {
+        query.brand = { $in: brand.split(",") }
+    }
+    if (sizes) {
+        query.sizes = { $in: sizes.split(",") }
+    }
+    if (colors) {
+        query.colors = { $in: [colors] }
+    }
+    if (gender) {
+        query.gender = gender
+    }
+    if (minPrice || maxPrice) {
+        query.price = {}
+        if (minPrice) {
+            query.price.$gte = Number(minPrice)
+        }
+        if (maxPrice) {
+            query.price.$lte = Number(maxPrice)
+        }
+    }
+    if (search) {
+        query.$or = [
+            {
+                name: {
+                    $regex: search,
+                    $options: "i"
+                }
+            },
+            {
+                description: {
+                    $regex: search,
+                    $options: "i"
+                }
+            },
+        ]
+    }
+    let sort = {}
+    if (sortBy) {
+        switch (sortBy) {
+            case "priceAsc":
+                sort = { price: 1 }
+                break
+            case "priceDesc":
+                sort = { price: -1 }
+                break
+            case "popularity":
+                sort = { rating: -1 }
+                break
+            default:
+                break
+        }
+    }
+    let products = await Products.find(query)
+        .sort(sort)
+        .limit(Number(limit) || 0)
+
+    if (!products) {
+        throw new ApiErrors(404, "product not found")
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, products, "product fecthed successfully")
+        )
+})
+
+export const getProductById = asyncHandler(async (req, res) => {
+    const { _id: productId } = req.params
+    const product = await Products.findById(productId)
+    if (!product) {
+        throw new ApiErrors(404, 'product not found')
+    }
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, product, 'product fetched successfully')
+        )
+})
+
+export const similarProduct = asyncHandler(async (req, res) => {
+    const {_id: productId} = req.params
+    const product = await Products.findById(productId)
+    if (!product) {
+        throw new ApiErrors(404, "product is not found")
+    }
+
+    const similarProduct = await Products.find({
+        _id:{$ne: productId},   //exclude the currect product
+        gender: product.gender,
+        category: product.category
+    }).limit(4)
+    if (!similarProduct) {
+        throw new ApiErrors(404, 'similar product not found')
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, similarProduct, 'similar product fetched successfully')
+        )
 })
