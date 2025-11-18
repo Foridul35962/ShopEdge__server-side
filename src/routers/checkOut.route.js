@@ -6,5 +6,7 @@ const CheckOut = express.Router()
 
 CheckOut.post('/add', verifyJWT, checkOutController.addCheckOut)
 CheckOut.patch('/:_id/pay', verifyJWT, checkOutController.onlinePayment)
+CheckOut.post('/:_id/finalize', verifyJWT, checkOutController.finalize)
+
 
 export default CheckOut

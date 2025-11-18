@@ -31,7 +31,7 @@ app.use(express.json())
 app.use('/api/v1/users', userRouter)
 app.use('/api/v1/products', productRouter)
 app.use('/api/v1/carts', CartRouter)
-app.use('/api/v1.check-out', CheckOutRouter)
+app.use('/api/v1/check-out', CheckOutRouter)
 
 //is server working check
 app.get('/', (req, res)=>{

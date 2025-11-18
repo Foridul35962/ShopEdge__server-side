@@ -1,4 +1,6 @@
+import Cart from "../models/Cart.model.js";
 import CheckOut from "../models/Checkout.model.js";
+import Order from "../models/Order.model.js";
 import ApiErrors from "../utils/ApiErrors.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
@@ -64,5 +66,43 @@ export const onlinePayment = asyncHandler(async (req, res) => {
             )
     } else {
         throw new ApiErrors(400, 'Invalid payment status')
+    }
+})
+
+export const finalize = asyncHandler(async(req, res)=>{
+    const checkOutId = req.params?._id
+    const checkOut = await CheckOut.findById(checkOutId)
+    if (!checkOut) {
+        throw new ApiErrors(404, 'check out not found')
+    }
+    if (checkOut.isPaid && !checkOut.isFinalized) {
+        const finalOrder = await Order.create({
+            user: checkOut.user,
+            orderItems: checkOut.checkOutItems,
+            shippingAddress: checkOut.shippingAddress,
+            paymentMethod: checkOut.paymentMethod,
+            totalPrice: checkOut.totalPrice,
+            isPaid: true,
+            paidAt: checkOut.paidAt,
+            isDelivered: false,
+            paymentStatus: "paid",
+            paymentDetails: checkOut.paymentDetails
+        })
+
+        //Mark the checkout as finalized
+        checkOut.isFinalized = true
+        checkOut.finalizedAt = Date.now()
+        await checkOut.save()
+
+        //Delete the cart associated with the user
+        await Cart.findOneAndDelete({user: checkOut.user})
+
+        return res
+            .status(201)
+            .json(
+                new ApiResponse(201, finalOrder, 'checkout finalized successfully')
+            )
+    } else {
+        throw new ApiErrors(400, 'check out already finalized')
     }
 })

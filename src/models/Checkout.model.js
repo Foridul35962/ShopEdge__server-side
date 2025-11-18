@@ -17,6 +17,12 @@ const checkOutItemSchema = new mongoose.Schema({
     price: {
         type: Number,
         required: true
+    },
+    size: String,
+    color: String,
+    quantity:{
+        type:Number,
+        required: true
     }
 }, { _id: false })
 
@@ -67,7 +73,7 @@ const checkOutSchema = new mongoose.Schema({
     paymentDetails: {
         type: mongoose.Schema.Types.Mixed
     },
-    ifFinalized: {
+    isFinalized: {
         type: Boolean,
         default: false
     },
