@@ -21,6 +21,10 @@ const tempUserSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
+    isverified:{
+        type: Boolean,
+        default: false
+    },
     createdAt:{     //auto delete in 1 day
         type: Date,
         default: Date.now,
