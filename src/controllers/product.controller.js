@@ -1,7 +1,9 @@
+import cloudinary from "../cloudinary/config.js";
 import Products from "../models/Product.model.js";
 import ApiErrors from "../utils/ApiErrors.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
 export const addProduct = asyncHandler(async (req, res) => {
     const {
@@ -18,9 +20,8 @@ export const addProduct = asyncHandler(async (req, res) => {
         collections,
         material,
         gender,
-        images,
         tags
-    } = req.body
+    } = req.body;
 
     if (
         !name ||
@@ -31,14 +32,44 @@ export const addProduct = asyncHandler(async (req, res) => {
         !category ||
         !Array.isArray(sizes) || sizes.length === 0 ||
         !Array.isArray(colors) || colors.length === 0 ||
-        !collections ||
-        !Array.isArray(images) || images.length === 0
+        !collections
     ) {
-        throw new ApiErrors(400, "All field are required")
+        throw new ApiErrors(400, "All fields are required");
+    }
+
+    // Images handle
+    const files = req.files;
+    const imageUrls = [];
+    const uploadedPublicIds = [];
+
+    try {
+        // FIXED HERE:
+        if (!files || files.length === 0) {
+            throw new ApiErrors(400, "Image is required");
+        }
+
+        for (const file of files) {
+            const uploaded = await uploadToCloudinary(file.buffer, "shop-edge-products");
+
+            imageUrls.push({
+                url: uploaded.secure_url,
+                imagePublicIds: uploaded.public_id,
+                altText: name
+            });
+
+            uploadedPublicIds.push(uploaded.public_id);
+        }
+
+    } catch (err) {
+        // CLEANUP on upload failure
+        for (const pid of uploadedPublicIds) {
+            await cloudinary.uploader.destroy(pid);
+        }
+        throw new ApiErrors(400, "Image upload failed", err);
     }
 
     try {
-        const product = new Products({
+        const product = await Products.create({
             name,
             description,
             price,
@@ -52,22 +83,24 @@ export const addProduct = asyncHandler(async (req, res) => {
             collections,
             material,
             gender,
-            images,
             tags,
-            user: req.user._id
-        })
+            user: req.user._id,
+            images: imageUrls
+        });
 
-        await product.save()
+        return res.status(200).json(
+            new ApiResponse(200, product, "Product saved successfully")
+        );
 
-        return res
-            .status(200)
-            .json(
-                new ApiResponse(200, product, 'product save successfully')
-            )
     } catch (error) {
-        throw new ApiErrors(400, "product save failed")
+        // CLEANUP on DB failure
+        for (const pid of uploadedPublicIds) {
+            await cloudinary.uploader.destroy(pid);
+        }
+
+        throw new ApiErrors(400, "Product save failed");
     }
-})
+});
 
 export const updateProduct = asyncHandler(async (req, res) => {
     const {
@@ -84,16 +117,58 @@ export const updateProduct = asyncHandler(async (req, res) => {
         collections,
         material,
         gender,
-        images,
         tags,
         isFeatured,
         isPublished,
+        deleteImageIds
     } = req.body
 
     const { _id: productId } = req.params
     const product = await Products.findById(productId)
     if (!product) {
         throw new ApiErrors(404, "product not found")
+    }
+
+    //handle old image delete
+    if (deleteImageIds && deleteImageIds.length > 0) {
+        for (const pid of deleteImageIds) {
+            await cloudinary.uploader.destroy(pid); // cloudinary delete
+        }
+
+        product.images = product.images.filter(
+            img => !deleteImageIds.includes(img.imagePublicIds)
+        );
+    }
+
+    //handle new image upload
+    const files = req.files;
+    const uploadedImages = [];
+    const uploadedPublicIds = [];
+
+    if (files && files.length > 0) {
+        try {
+            for (const file of files) {
+                const uploaded = await uploadToCloudinary(file.buffer, "shop-edge-products");
+
+                uploadedImages.push({
+                    url: uploaded.secure_url,
+                    imagePublicIds: uploaded.public_id,
+                    altText: name || product.name,
+                });
+
+                uploadedPublicIds.push(uploaded.public_id);
+            }
+
+            // push new images to product
+            product.images.push(...uploadedImages);
+
+        } catch (err) {
+            // Rollback uploaded images
+            for (const pid of uploadedPublicIds) {
+                await cloudinary.uploader.destroy(pid);
+            }
+            throw new ApiErrors(400, "Image upload failed. Try again.");
+        }
     }
 
     product.name = name || product.name
@@ -108,7 +183,6 @@ export const updateProduct = asyncHandler(async (req, res) => {
     product.collections = collections || product.collections
     product.material = material || product.material
     product.gender = gender || product.gender
-    product.images = images || product.images
     product.tags = tags || product.tags
     product.isFeatured = isFeatured !== undefined ? isFeatured : product.isFeatured
     product.isPublished = isPublished !== undefined ? isPublished : product.isPublished
@@ -128,8 +202,21 @@ export const updateProduct = asyncHandler(async (req, res) => {
 
 export const deleteProduct = asyncHandler(async (req, res) => {
     const { productId } = req.body
+    if (!productId) {
+        throw new ApiErrors(400, "productId is required")
+    }
     try {
-        await Products.findByIdAndDelete(productId)
+        const product = await Products.findById(productId)
+        if (!product) {
+            throw new ApiErrors(404, "product is not found")
+        }
+
+        for(const pid of product.images){
+            if (pid.imagePublicIds) {
+                await cloudinary.uploader.destroy(pid.imagePublicIds)
+            }
+        }
+        await product.deleteOne()
         return res
             .status(200)
             .json(
@@ -283,8 +370,8 @@ export const bestSellerProduct = asyncHandler(async (req, res) => {
         )
 })
 
-export const newArrivals = asyncHandler(async(req, res)=>{
-    const product = await Products.find().sort({createdAt:-1}).limit(8)
+export const newArrivals = asyncHandler(async (req, res) => {
+    const product = await Products.find().sort({ createdAt: -1 }).limit(8)
     if (!product) {
         throw new ApiErrors(404, 'new arrivals products not found')
     }
