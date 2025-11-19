@@ -12,6 +12,7 @@ import CartRouter from './routers/Cart.route.js'
 import CheckOutRouter from './routers/checkOut.route.js'
 import orderRouter from './routers/order.route.js'
 import SubscriberRouter from './routers/subscriber.route.js'
+import adminRouter from './routers/admin.route.js'
 
 //setting request URL
 app.use(cors({
@@ -36,6 +37,7 @@ app.use('/api/v1/carts', CartRouter)
 app.use('/api/v1/check-out', CheckOutRouter)
 app.use('/api/v1/orders', orderRouter)
 app.use('/api/v1/subscriber', SubscriberRouter)
+app.use('/api/v1/admin', adminRouter)
 
 //is server working check
 app.get('/', (req, res)=>{
