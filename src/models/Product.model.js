@@ -59,6 +59,10 @@ const productSchema = new mongoose.Schema({
                 type: String,
                 required: true
             },
+            imagePublicIds:{
+                type: String,
+                require: true
+            },
             altText: {
                 type: String
             }
