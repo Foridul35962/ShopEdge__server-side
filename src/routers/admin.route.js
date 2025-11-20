@@ -6,5 +6,6 @@ import checkAdmin from '../middlewares/checkAdmin.js'
 const admin = express.Router()
 
 admin.get('/get-users', verifyJWT, checkAdmin, adminController.getUsers)
+admin.post('/add-admin', verifyJWT, checkAdmin, adminController.addAdmin)
 
 export default admin
