@@ -95,26 +95,11 @@ export const verifyEmail = asyncHandler(async (req, res) => {
 
     await TempUsers.findOneAndDelete({ email })
 
-    //create JWT token
-    const payload = { user: { _id: user._id, role: user.role } }
-
-    //sign and return the token along with user data
-    jwt.sign(
-        payload,
-        process.env.JWT_SECRET,
-        { expiresIn: '40h' },
-        (err, token) => {
-            if (err) {
-                throw new ApiErrors(500, 'JWT create failed')
-            }
-
-            return res
-                .status(200)
-                .json(
-                    new ApiResponse(200, { user, token }, 'user registration successfully')
-                )
-        }
-    )
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, { user, token }, 'user registration successfully')
+        )
 })
 
 //login
@@ -186,7 +171,7 @@ export const forgetPassword = asyncHandler(async (req, res) => {
     await TempUsers.findOneAndUpdate(
         { email },
         { email, otp, expiredOtp, createdAt: Date.now() },
-        {upsert: true, new: true}
+        { upsert: true, new: true }
     )
 
     try {
@@ -223,7 +208,7 @@ export const verifyPassOtp = asyncHandler(async (req, res) => {
     }
 
     tempuser.isverified = true
-    await tempuser.save({validateBeforeSave: false})
+    await tempuser.save({ validateBeforeSave: false })
 
     return res
         .status(200)
@@ -254,19 +239,19 @@ export const resetPassword = [
             throw new ApiErrors(400, 'wrong password entered', error.array())
         }
 
-        const tempUser = await TempUsers.findOne({email})
+        const tempUser = await TempUsers.findOne({ email })
         if (!tempUser || !tempUser.isverified) {
             throw new ApiErrors(400, 'email is not verified')
         }
 
-        const user = await Users.findOne({email})
+        const user = await Users.findOne({ email })
 
         if (!user) {
             throw new ApiErrors(500, 'password reset failed')
         }
 
         user.password = password
-        await user.save({validateBeforeSave: false})
+        await user.save({ validateBeforeSave: false })
 
         user.password = undefined
 
