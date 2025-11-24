@@ -157,7 +157,7 @@ export const deleteCart = asyncHandler(async (req, res) => {
         return res
             .status(200)
             .json(
-                new ApiResponse(200, {}, 'product in cart deleted successfully')
+                new ApiResponse(200, productId, 'product in cart deleted successfully')
             )
     } catch (error) {
         throw new ApiErrors(500, 'product in cart deleted failed', error)
