@@ -6,6 +6,7 @@ import upload from '../middlewares/upload.js'
 
 const product = express.Router()
 
+product.get('/all-product', verifyJWT, checkAdmin, productController.getAllProduct)
 product.post('/add-product', verifyJWT, checkAdmin, upload, productController.addProduct)
 product.patch('/update-product/:_id', verifyJWT, checkAdmin, upload, productController.updateProduct)
 product.post('/delete-product', verifyJWT, checkAdmin, productController.deleteProduct)

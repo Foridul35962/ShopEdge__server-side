@@ -5,6 +5,18 @@ import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
+export const getAllProduct = asyncHandler(async(req, res)=>{
+    const product = await Products.find({})
+    if (!product) {
+        throw new ApiErrors(404, 'product not found')
+    }
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, product, 'product fetched successfully')
+        )
+})
+
 export const addProduct = asyncHandler(async (req, res) => {
     const {
         name,
@@ -220,7 +232,7 @@ export const deleteProduct = asyncHandler(async (req, res) => {
         return res
             .status(200)
             .json(
-                new ApiResponse(200, {}, 'Product delete successfully')
+                new ApiResponse(200, productId, 'Product delete successfully')
             )
     } catch (error) {
         throw new ApiErrors(400, 'Entered wrong product id')
