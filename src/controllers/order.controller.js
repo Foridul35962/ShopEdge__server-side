@@ -46,8 +46,8 @@ export const adminOrderList = asyncHandler(async (req, res) => {
         )
 })
 
-export const changeOrderStatus = asyncHandler(async (req, res)=>{
-    const {orderId, newStatus} = req.body
+export const changeOrderStatus = asyncHandler(async (req, res) => {
+    const { orderId, newStatus } = req.body
     if (!orderId || !newStatus) {
         throw new ApiErrors(400, 'all fields are required')
     }
@@ -81,8 +81,8 @@ export const changeOrderStatus = asyncHandler(async (req, res)=>{
         )
 })
 
-export const deleteOrder = asyncHandler(async(req, res)=>{
-    const {orderId} = req.body
+export const deleteOrder = asyncHandler(async (req, res) => {
+    const { orderId } = req.body
     if (!orderId) {
         throw new ApiErrors(400, 'order id is required')
     }
@@ -101,6 +101,6 @@ export const deleteOrder = asyncHandler(async(req, res)=>{
     return res
         .status(200)
         .json(
-            new ApiResponse(200, {}, 'order delete successfully')
+            new ApiResponse(200, orderId, 'order delete successfully')
         )
 })
