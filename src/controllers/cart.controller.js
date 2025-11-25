@@ -23,8 +23,7 @@ export const addCart = asyncHandler(async (req, res) => {
                 p.color === color
         )
         if (productIdx > -1) {
-            //If the product already exists, update the quantity
-            cart.products[productIdx].quantity += quantity
+            throw new ApiErrors(400, 'this product is already in cart')
         } else {
             //add new product
             cart.products.push({
