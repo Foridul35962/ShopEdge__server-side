@@ -128,7 +128,7 @@ export const login = asyncHandler(async (req, res) => {
     jwt.sign(
         payload,
         process.env.JWT_SECRET,
-        { expiresIn: '40h' },
+        { expiresIn: '720h' },
         (err, token) => {
             if (err) {
                 throw new ApiErrors(500, 'JWT create failed')
