@@ -2,14 +2,12 @@ import dotEnv from 'dotenv'
 dotEnv.config()
 import app from './src/app.js'
 import connectDB from './src/db/database.js'
+import serverless from 'serverless-http'
+export default serverless(app)
 
-
-const PORT = process.env.PORT || 3000
-
-connectDB().then(()=>{
-    app.listen(PORT, ()=>{
-        console.log(`server is running on http://localhost:${PORT}`);
-    })
-}).catch((error)=>{
-    console.log('server connection failed: ',error);
+// connectDB call
+connectDB().then(() => {
+    console.log('Database connected successfully');
+}).catch((error) => {
+    console.log('Database connection failed: ', error);
 })
