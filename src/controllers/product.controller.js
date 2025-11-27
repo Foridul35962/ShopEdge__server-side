@@ -5,7 +5,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
-export const getAllProduct = asyncHandler(async(req, res)=>{
+export const getAllProduct = asyncHandler(async (req, res) => {
     const product = await Products.find({})
     if (!product) {
         throw new ApiErrors(404, 'product not found')
@@ -110,7 +110,7 @@ export const addProduct = asyncHandler(async (req, res) => {
             await cloudinary.uploader.destroy(pid);
         }
 
-        throw new ApiErrors(400, "Product save failed");
+        throw new ApiErrors(400, error.message);
     }
 });
 
@@ -199,6 +199,10 @@ export const updateProduct = asyncHandler(async (req, res) => {
     product.isFeatured = isFeatured !== undefined ? isFeatured : product.isFeatured
     product.isPublished = isPublished !== undefined ? isPublished : product.isPublished
     product.sku = sku || product.sku
+    if (!product.user && req.user?._id) {
+        product.user = req.user._id
+    }
+
 
     const updatedProduct = await product.save()
     if (!updatedProduct) {
@@ -223,7 +227,7 @@ export const deleteProduct = asyncHandler(async (req, res) => {
             throw new ApiErrors(404, "product is not found")
         }
 
-        for(const pid of product.images){
+        for (const pid of product.images) {
             if (pid.imagePublicIds) {
                 await cloudinary.uploader.destroy(pid.imagePublicIds)
             }
